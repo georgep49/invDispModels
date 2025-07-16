@@ -1,0 +1,83 @@
+# This code changes the mechanism names in the database to the factor levels
+# in the Tamme et al. model
+library(tidyverse)
+
+dispersal_db_tax_m1 <- dispersal_db_tax %>%
+  mutate(DS = case_when(
+    mechanism1 == "attachment" ~ "animal",
+    mechanism1 == "internal" ~ "animal",
+    mechanism1 == "scatterhoarding" ~ "animal",
+    mechanism1 == "bird nesting material" ~ "animal", 
+    mechanism1 == "wind" ~ "wind.special",
+    .default = as.character(mechanism1))
+  )
+
+dispersal_db_tax_m2 <- dispersal_db_tax %>%
+  mutate(DS = case_when(
+    mechanism2 == "attachment" ~ "animal",
+    mechanism2 == "attachment?" ~ "animal",
+    mechanism2 == "internal" ~ "animal",
+    mechanism2 == "scatterhoarding" ~ "animal", 
+    mechanism2 == "bird nesting material" ~ "animal", 
+    mechanism2 == "wind" ~ "wind.special",
+    .default = as.character(mechanism2))
+  )
+
+  dispersal_db_tax_m3 <- dispersal_db_tax %>%
+  mutate(DS = case_when(
+    mechanism3 == "attachment" ~ "animal",
+    mechanism3 == "internal" ~ "animal",
+    mechanism3 == "scatterhoarding" ~ "animal", 
+    mechanism3 == "bird nesting material" ~ "animal", 
+    mechanism3 == "wind" ~ "wind.special",
+    .default = as.character(mechanism3))
+  )
+  
+  
+  dispersal_db_tax_m4 <- dispersal_db_tax %>%
+  mutate(DS = case_when(
+    mechanism4 == "attachment" ~ "animal",
+    mechanism4 == "internal" ~ "animal",
+    mechanism4 == "scatterhoarding" ~ "animal", 
+    mechanism4 == "bird nesting material" ~ "animal", 
+    mechanism4 == "wind" ~ "wind.special",
+    .default = as.character(mechanism4))
+  )
+  
+  
+  dispersal_db_tax_m5 <- dispersal_db_tax %>%
+  mutate(DS = case_when(
+    mechanism5 == "attachment" ~ "animal",
+    mechanism5 == "internal" ~ "animal",
+    mechanism5 == "scatterhoarding" ~ "animal",
+    mechanism5 == "bird nesting material" ~ "animal", 
+    mechanism5 == "wind" ~ "wind.special",
+    .default = as.character(mechanism5))
+  )
+
+
+
+  ######
+dispersal_db_tax_allMech <- bind_rows(dispersal_db_tax_m1, 
+              dispersal_db_tax_m2,
+              dispersal_db_tax_m3,
+              dispersal_db_tax_m4,
+              dispersal_db_tax_m5, 
+              .id = "mechanism") %>% 
+  select(mechanism, species, order, family, DS, seed.mass, height, growth.form)  %>%
+  rename(Species = species, Order = order, Family = family, SM = seed.mass, RH = height, GF = growth.form) %>%
+  filter(!DS %in% c("unknown", "water")) %>%
+  mutate(RH = as.numeric(RH), SM = log10(SM * 1000), RH = log10(RH)) %>%   # model needs mg for SM and log10 for SM and RH
+  rowwise() %>%
+  mutate(model = case_when(               # which of the Tamme et al. models to use
+      !any(is.na(DS), is.na(GF), is.na(SM), is.na(RH)) ~ 2,
+      is.na(SM) & !any(is.na(DS), is.na(GF), is.na(RH)) ~ 3,
+      is.na(RH) & !any(is.na(DS), is.na(GF), is.na(SM)) ~ 4,
+      is.na(RH) & is.na(SM) & !any(is.na(DS), is.na(GF)) ~ 5,
+      .default = NA)) %>%
+  drop_na(DS, GF) %>%
+  distinct(Species, DS, SM, RH, GF, model, .keep_all = TRUE)
+
+# Seem to need this for some reason (to deal with duplicate rows I think)...
+dispersal_db_tax_allMech <- dispersal_db_tax_allMech %>%
+   mutate(Species = paste0(Species, "_mech", mechanism))
