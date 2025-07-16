@@ -2,5 +2,9 @@
 *.pdf
 *.zip
 *.RData
+*.RDataTmp
+*.Rhistory
+*.htm
 .Rproj.user/
 oldData/
+ms/
