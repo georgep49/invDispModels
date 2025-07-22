@@ -22,14 +22,18 @@ dispersal_db <- read_xlsx("data/weed dispersal data 2025-07-15.xlsx")
 # Except for J. vulgaris, which is the only species with two syndromes where one of them (syndrome2) 
 # is unspecialised (in this case, only subtract the wind syndrome from the number of mechanisms!).
 
+# Nearly there – the species with two syndromes need to have both syndromes subtracted from the 
+# number of mechanisms to calculate the number of non-standard mechanisms.
+
 dispersal_db <- dispersal_db |>
   rowwise() |>
   mutate(
     n_mech = sum(!is.na(c_across(starts_with("mechanism")))) - if_else(mechanism1 == "unknown", 1, 0, 0),
     n_synd = sum(!is.na(c_across(starts_with("syndrome")))),
     n_nonstd_mech = if_else(syndrome1 != "unspecialised", n_mech - n_synd, n_mech),
-    n_nonstd_mech = if_else(!is.na(syndrome2), n_mech - (n_synd - 1), n_nonstd_mech))
-#last line for JacVul    
+    n_nonstd_mech = if_else(!is.na(syndrome2) & species == "Jacobaea vulgaris", n_mech - (n_synd - 1), 
+                    if_else(!is.na(syndrome2) & species != "Jacobaea vulgaris", n_mech - n_synd, n_nonstd_mech)))
+# catch for JacVul    
 
 # prevalence of the mechanisms in the flora
 mech_table <- lapply(dispersal_db[,paste0("mechanism", 1:5)], function(x) {as.vector(x)}) |> 
@@ -118,9 +122,9 @@ all_predictions <- all_predictions |>
 
 write_csv(dispersal_db, "output/dispersal_db.csv")
 
-write_csv(dispersal_db_tax, "output/dispersalTable_1607125.csv")
-write_csv(all_predictions, "output/dispersalDistance_1607125.csv")
-write_csv(mech_table, "output/mechanismsTable_1607125.csv")
+write_csv(dispersal_db_tax, "output/dispersalTable_2307125.csv")
+write_csv(all_predictions, "output/dispersalDistance_2307125.csv")
+write_csv(mech_table, "output/mechanismsTable_2307125.csv")
 
 
 
@@ -172,4 +176,4 @@ all_ws_predictions <- all_ws_predictions |>
   left_join(dispersal_db |> select(-c(1, 3, 4, 5)))
 
 ## Write to file...
-write_csv(all_ws_predictions, "output/dispersalDistanceWindSpec_1607125.csv")
+write_csv(all_ws_predictions, "output/dispersalDistanceWindSpec_2307125.csv")
