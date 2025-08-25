@@ -1,5 +1,6 @@
 *.docx
 *.pdf
+*.tiff
 *.zip
 *.RData
 *.RDataTmp
@@ -8,3 +9,4 @@
 .Rproj.user/
 oldData/
 ms/
+gbif/rawData
