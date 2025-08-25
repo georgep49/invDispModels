@@ -3,7 +3,7 @@
 library(tidyverse)
 library(rgbif)
 
-dispersalTx <- read_csv("gbif/dispersalDistanceSumm_060125.csv")
+dispersalTx <- read_csv("output/dispersalDistance_2307125.csv")
 
 gbif_taxon_keys <- 
   pull(dispersalTx, species) |>
@@ -32,11 +32,13 @@ occ_download(
     pwd = "zhM6ZuhhXRmzh6K",
     email = "george.perry@auckland.ac.nz")
 
-d <- occ_download_get("0057162-241126133413365", overwrite = TRUE) %>%
+#  GBIF Occurrence Download https://www.gbif.org/occurrence/download/0037399-250811113504898 
+# Accessed from R via rgbif (https://github.com/ropensci/rgbif) on 2025-08-24
+#d <- occ_download_get("0057162-241126133413365", overwrite = TRUE) %>%
+d <- occ_download_get("0037399-250811113504898", overwrite = TRUE) %>%
   occ_download_import()
 
-write_csv(d, file = "rawGBIFDownload_060125.csv")
-# GBIF Occurrence Download https://doi.org/10.15468/dl.d6esbz Accessed from R via rgbif (https://github.com/ropensci/rgbif) on 2025-01-05
+write_csv(d, file = "rawGBIFDownload_240825.csv")
 
 ######################
 # remove records without coordinates
@@ -44,7 +46,7 @@ library(tidyverse)
 library(sf)
 library(southernMaps)
 
-load(".gbif/rangeAnalysis.RData")
+load("./gbif/rangeAnalysis_240825.RData")
 
 # d <- read_csv("./gbif/rawGBIFDownload_060125.csv")
 
@@ -79,11 +81,11 @@ dat_range_summ <- dat_range |>
   ungroup() |>
   left_join(max_dd, by = c("searchSpecies" = "species"))
 
-write_csv(dat_range_summ, file = "rangeSummaryInvasiveDispersal_060125.csv")
+write_csv(dat_range_summ, file = "rangeSummaryInvasiveDispersal_240825.csv")
 
   
 #### Visualisation code
-load("./gbif/rangeAnalysis.RData")
+load("./gbif/rangeAnalysis_240825.RData")
 dat_range_summ$dd_raw <- 10 ^ dat_range_summ$dd
 
 lbl <- dat_range_summ |>
@@ -97,18 +99,18 @@ rangePlot <- ggplot(dat_range_summ) +
   geom_point(aes(x = n, y = lat_range, col = dd), size = 3, alpha = 0.7) +
   ggrepel::geom_text_repel(data = lbl, 
                           aes(x = n, y = lat_range, label = searchSpecies),
-    min.segment.length = 0, box.padding = 0.5, max.overlaps = Inf, size = 3, fontface = "italic") +
+    min.segment.length = 0, box.padding = 0.5, max.overlaps = Inf, size = 4, fontface = "italic") +
   labs(x = "No. of records", y = "Latitudinal range (degrees)") +
   scale_colour_distiller(name = "Max dispersal distance (m)", palette = "YlGnBu", direction = 1, breaks = 0:4, labels = 10^(0:4)) +
   scale_x_continuous(breaks = c(0, 10^(0:5)), transform = "pseudo_log", 
  guide = "axis_logticks") +
   theme_bw()
 
-pdf(file = "gbif/rangeAnalysisAllRestricted_v2.pdf")
+pdf(file = "gbif/rangeAnalysisAllRestricted_250825.pdf")
 rangePlot
 dev.off()
 
-save.image("D:/Research/wottonDispersalModels/gbif/rangeAnalysis.RData")
+save.image("gbif/rangeAnalysis_250824.RData")
 
 #####
 wm <- borders("world", regions = "New Zealand", colour = "gray50", fill = "gray50")
